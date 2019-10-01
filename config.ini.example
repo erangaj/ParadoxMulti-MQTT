@@ -5,6 +5,8 @@ SERIAL_PORT: /dev/ttyS1                 ;For USB370 module use /dev/ttyUSB0
 [MQTT Broker]
 IP: 127.0.0.1
 Port: 1883
+User: 
+Password: 
 
 [Alarm]
 Alarm_Model = ParadoxMG5050             ;Currently not used

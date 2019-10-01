@@ -34,6 +34,8 @@ SERIAL_PORT = "/dev/ttyS1"
 
 MQTT_IP = "127.0.0.1"
 MQTT_Port = 1883
+MQTT_USER = None
+MQTT_PASSWORD = ""
 MQTT_KeepAlive = 60  # Seconds
 
 # Options are Arm, Disarm, Stay, Sleep (case sensitive!)
@@ -679,9 +681,9 @@ class Paradox:
                     
                     state = (ord(data[19 + b]) >> bt) & 0x01
                     if state == 0:
-                        state  = "Zone OK"
+                        state  = "OFF"
                     else:
-                        state = "Zone open"
+                        state = "ON"
                     if Alarm_Data['zone'][i] != state and ('open' in Alarm_Data['zone'][i] or 'OK' in Alarm_Data['zone'][i] or Alarm_Data['zone'][i] == ''):
                          Alarm_Data['zone'][i] = state
                          client.publish(Topic_Publish_Status+"/Zones/"+Alarm_Data['labels']['zoneLabel'][i + 1].replace(' ','_').title(), Alarm_Data['zone'][i], retain=True)
@@ -690,11 +692,15 @@ class Paradox:
                 for i in [0, 1]:
                     state = 0
                     if ord(data[18 + i * 4]) == 0x01:
-                        state = "Arming"
+                        state = "pending"
                     elif ord(data[17 + i * 4]) == 0x01:
-                        state = "Armed"
+                        state = "armed_away"
+                    elif ord(data[17 + i * 4]) == 0x03:
+                        state = "armed_night"
+                    elif ord(data[17 + i * 4]) == 0x05:
+                        state = "armed_home"
                     else:
-                        state  = "Disarmed"
+                        state  = "disarmed"
                     if Alarm_Data['partition'][i] != state:
                         Alarm_Data['partition'][i] = state
                         client.publish(Topic_Publish_Status + "/Partitions/%d/" % (i + 1), state )
@@ -805,6 +811,8 @@ if __name__ == '__main__':
 
                 MQTT_IP = Config.get("MQTT Broker", "IP")
                 MQTT_Port = int(Config.get("MQTT Broker", "Port"))
+                MQTT_USER = Config.get("MQTT Broker", "User")
+                MQTT_PASSWORD = Config.get("MQTT Broker", "Password")
                 SERIAL_PORT =  Config.get("SERIAL", "SERIAL_PORT")
                 passw = Config.get("SERIAL", "Password")
 
@@ -838,7 +846,7 @@ if __name__ == '__main__':
                 client = mqtt.Client()
                 client.on_connect = on_connect
                 client.on_message = on_message
-
+                client.username_pw_set(MQTT_USER, MQTT_PASSWORD)
                 client.connect(MQTT_IP, MQTT_Port, MQTT_KeepAlive)
 
                 client.loop_start()
