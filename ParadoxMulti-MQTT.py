@@ -681,9 +681,9 @@ class Paradox:
                     
                     state = (ord(data[19 + b]) >> bt) & 0x01
                     if state == 0:
-                        state  = "OFF"
+                        state  = "Zone OK"
                     else:
-                        state = "ON"
+                        state = "Zone open"
                     if Alarm_Data['zone'][i] != state and ('open' in Alarm_Data['zone'][i] or 'OK' in Alarm_Data['zone'][i] or Alarm_Data['zone'][i] == ''):
                          Alarm_Data['zone'][i] = state
                          client.publish(Topic_Publish_Status+"/Zones/"+Alarm_Data['labels']['zoneLabel'][i + 1].replace(' ','_').title(), Alarm_Data['zone'][i], retain=True)
@@ -691,6 +691,11 @@ class Paradox:
             elif aliveSeq == 1:
                 for i in [0, 1]:
                     state = 0
+                    print "==================================="
+                    print i
+                    for x in data:
+                        print ord(x),
+                    print(" ")
                     if ord(data[18 + i * 4]) == 0x01:
                         state = "pending"
                     elif ord(data[17 + i * 4]) == 0x01:
@@ -701,6 +706,8 @@ class Paradox:
                         state = "armed_home"
                     else:
                         state  = "disarmed"
+                    print state
+                    print "==============================="
                     if Alarm_Data['partition'][i] != state:
                         Alarm_Data['partition'][i] = state
                         client.publish(Topic_Publish_Status + "/Partitions/%d/" % (i + 1), state )
